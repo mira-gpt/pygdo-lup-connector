@@ -1,17 +1,14 @@
-import hmac
-
-from gdo.base.IPC import IPC
-from gdo.base.Exceptions import GDOError
 from gdo.base.GDT import GDT
 from gdo.base.Method import Method
 from gdo.core.GDT_RestOfText import GDT_RestOfText
-from gdo.core.GDT_Secret import GDT_Secret
 from gdo.core.GDT_String import GDT_String
 from gdo.core.GDT_UInt import GDT_UInt
+from gdo.lup_connector.ChatQueue import ChatQueue
+from gdo.lup_connector.connector.LUP import LUP
 
 
 class to_dog(Method):
-    """Accept one authenticated LinkUUp room event and inject it into Dog."""
+    """Append one LinkUUp room event to Dog's IBDES hand-off queue."""
 
     @classmethod
     def gdo_trigger(cls) -> str:
@@ -25,7 +22,6 @@ class to_dog(Method):
 
     def gdo_parameters(self) -> list[GDT]:
         return [
-            GDT_Secret('secret').not_null(),
             GDT_UInt('room').not_null(),
             GDT_UInt('user').not_null(),
             GDT_String('username').not_null().maxlen(64),
@@ -39,21 +35,15 @@ class to_dog(Method):
         return module_lup_connector.instance()
 
     def gdo_before_execute(self):
-        module = self.module_lup()
-        secret = self.param_val('secret')
-        if not module.cfg_enabled() or not hmac.compare_digest(secret, module.cfg_shared_secret()):
-            raise GDOError('err_permission')
+        if not self.module_lup().cfg_enabled():
+            raise PermissionError('LinkUUp connector is disabled')
 
     async def gdo_execute(self) -> GDT:
-        # HTTP and Dog are separate processes. Hand the incoming event to the
-        # persistent IPC queue; the Dog process then creates and executes the
-        # actual channel message in its own runtime.
-        IPC.send('lup_connector.ipc_message', (
-            self.param_val('room'),
-            self.param_val('user'),
-            self.param_val('username'),
-            self.param_val('displayname') or self.param_val('username'),
-            self.param_val('lang'),
-            self.param_val('message'),
-        ))
+        room_id = self.param_value('room')
+        channel = LUP.get_server().get_or_create_channel(f'room-{room_id}', f'LinkUUp #{room_id}')
+        language = self.param_val('lang')
+        channel.save_val('chan_language', language)
+        ChatQueue.enqueue(
+            room_id, channel.get_id(), self.param_val('displayname') or self.param_val('username'),
+            language, self.param_val('message'))
         return self.empty()

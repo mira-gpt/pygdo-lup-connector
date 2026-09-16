@@ -7,6 +7,7 @@ from gdo.base.Message import Message
 from gdo.base.Render import Mode
 from gdo.core.Connector import Connector
 from gdo.core.GDO_Server import GDO_Server
+from gdo.lup_connector.ChatQueue import ChatQueue
 
 
 class LUP(Connector):
@@ -36,6 +37,20 @@ class LUP(Connector):
         self._connected = True
         return True
 
+    async def poll_chat_queue(self):
+        """Deliver queued LinkUUp IBDES context to Mira at a calm cadence."""
+        from gdo.mira.util import send_to_mira
+        for item in ChatQueue.take_all():
+            channel = self.get_server().get_channel_by_name(f'room-{item.room}')
+            language = channel.get_lang_iso() if channel else 'en'
+            try:
+                await asyncio.to_thread(send_to_mira, f'$chat --lang={language}\n{item.payload}')
+            except Exception as ex:
+                ChatQueue.restore(item)
+                Logger.exception(ex, 'LinkUUp chat queue delivery failed')
+            else:
+                ChatQueue.acknowledge(item)
+
     async def gdo_send_to_channel(self, msg: Message):
         callback = self.module_lup().cfg_callback_url()
         if not callback:
@@ -48,7 +63,6 @@ class LUP(Connector):
         }).encode()
         request = Request(callback, data=payload, method='POST', headers={
             'Content-Type': 'application/json',
-            'X-LUP-Secret': self.module_lup().cfg_shared_secret(),
         })
         try:
             await asyncio.to_thread(urlopen, request, timeout=5)
