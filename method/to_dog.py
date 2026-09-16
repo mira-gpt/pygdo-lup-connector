@@ -30,7 +30,7 @@ class to_dog(Method):
             GDT_UInt('user').not_null(),
             GDT_String('username').not_null().maxlen(64),
             GDT_String('displayname').maxlen(96),
-            GDT_String('lang').not_null().exact_len(2).initial('en'),
+            GDT_String('lang').not_null().minlen(2).maxlen(2).initial('en'),
             GDT_RestOfText('message').not_null(),
         ]
 

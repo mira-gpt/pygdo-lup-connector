@@ -31,7 +31,7 @@ class backlog(Method):
             GDT_Secret('secret').not_null(),
             GDT_UInt('room').not_null(),
             GDT_String('room_name').not_null().maxlen(128),
-            GDT_String('lang').not_null().exact_len(2).initial('en'),
+            GDT_String('lang').not_null().minlen(2).maxlen(2).initial('en'),
             GDT_JSON('backlog').not_null(),
         ]
 

@@ -23,7 +23,7 @@ class ipc_message(Method):
             GDT_UInt('user').not_null().positional(),
             GDT_String('username').not_null().maxlen(64).positional(),
             GDT_String('displayname').not_null().maxlen(96).positional(),
-            GDT_String('lang').not_null().exact_len(2).positional(),
+            GDT_String('lang').not_null().minlen(2).maxlen(2).positional(),
             GDT_RestOfText('message').not_null().positional(),
         ]
 
