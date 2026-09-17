@@ -41,10 +41,25 @@ class ChatQueue:
     def enqueue(cls, room: int, channel_id: int, username: str,
                 language: str, message: str) -> None:
         path = cls.path(room)
-        Files.create_dir(str(path.parent), 0o0770)
+        mode = int(Application.config('file.mode.dir', "0o0700"))
+        Files.create_dir(str(path.parent), mode)
         record = f"{Time.get_date()} #{channel_id} {cls.compact(username)}{{LinkUUp}} {cls.compact(message)}\n"
         with path.open('a', encoding='utf-8') as handle:
             handle.write(record)
+
+    @classmethod
+    def enqueue_backlog(cls, room: int, channel_id: int, language: str,
+                        backlog: list[dict[str, object]]) -> None:
+        """Append a complete remote-room backlog as individual IBDES rows."""
+        path = cls.path(room)
+        mode = int(Application.config('file.mode.dir', "0o0700"))
+        Files.create_dir(str(path.parent), mode)
+        with path.open('a', encoding='utf-8') as handle:
+            for line in backlog:
+                timestamp = cls.compact(str(line.get('time', Time.get_date())))
+                username = cls.compact(str(line.get('name', 'LinkUUp')))
+                message = cls.compact(str(line.get('message', '')))
+                handle.write(f"{timestamp} #{channel_id} {username}{{LinkUUp}} {message}\n")
 
     @classmethod
     def take_all(cls) -> list[QueuedRoomChat]:
