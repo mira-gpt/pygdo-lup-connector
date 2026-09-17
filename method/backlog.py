@@ -12,7 +12,7 @@ class backlog(Method):
 
     @classmethod
     def gdo_trigger(cls) -> str:
-        return 'lup.backlog'
+        return 'lup_connector.to_dog'
 
     def gdo_method_hidden(self) -> bool:
         return True
