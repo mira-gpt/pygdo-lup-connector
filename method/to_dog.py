@@ -41,5 +41,5 @@ class to_dog(Method):
         channel = LUP.get_server().get_or_create_channel(f'room-{room_id}', self.param_val('room_name'))
         language = self.param_val('lang')
         channel.save_val('chan_language', language)
-        ChatQueue.enqueue_backlog(room_id, channel.get_id(), language, self.param_val('backlog'))
+        ChatQueue.enqueue_backlog(room_id, channel.get_id(), language, self.param_value('backlog'))
         return self.empty()
