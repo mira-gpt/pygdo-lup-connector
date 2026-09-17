@@ -1,5 +1,8 @@
+import hmac
+
 from gdo.base.GDT import GDT
 from gdo.base.Method import Method
+from gdo.core.GDT_Secret import GDT_Secret
 from gdo.core.GDT_JSON import GDT_JSON
 from gdo.core.GDT_String import GDT_String
 from gdo.core.GDT_UInt import GDT_UInt
@@ -22,6 +25,7 @@ class to_dog(Method):
 
     def gdo_parameters(self) -> list[GDT]:
         return [
+            GDT_Secret('secret').not_null(),
             GDT_UInt('room').not_null(),
             GDT_String('room_name').not_null().maxlen(128),
             GDT_String('lang').not_null().minlen(2).maxlen(2).initial('en'),
@@ -35,6 +39,8 @@ class to_dog(Method):
     def gdo_before_execute(self):
         if not self.module_lup().cfg_enabled():
             raise PermissionError('LinkUUp connector is disabled')
+        if not hmac.compare_digest(self.module_lup().cfg_shared_secret(), self.param_val('secret')):
+            raise PermissionError('LinkUUp authentication failed')
 
     async def gdo_execute(self) -> GDT:
         room_id = self.param_val('room')

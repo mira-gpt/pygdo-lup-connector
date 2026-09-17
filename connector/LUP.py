@@ -54,10 +54,11 @@ class LUP(Connector):
     async def gdo_send_to_channel(self, msg: Message):
         callback = self.module_lup().cfg_callback_url()
         if not callback:
-            Logger.warning('LinkUUp reply dropped: lup_callback_url is not configured.')
+            Logger.message('LinkUUp reply dropped: callback_url is not configured.')
             return
         room = msg._env_channel.get_name().removeprefix('room-')
         payload = json.dumps({
+            'secret': self.module_lup().cfg_shared_secret(),
             'room': room,
             'message': msg._result,
         }).encode()

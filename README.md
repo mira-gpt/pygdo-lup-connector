@@ -16,7 +16,9 @@ TLS-protected LinkUUp ↔ PyGDO/Dog bridge.
 The connector intentionally only supports room broadcasts. LinkUUp implements
 the separate private-user-message direction itself.
 
-The module is disabled by default. Set `lup_enabled` and `lup_callback_url`
-before connecting a real LinkUUp instance. LinkUUp configures
-`lup_dog_backlog_url` for `lup_connector.to_dog`.
+The module is disabled by default. Set `lup_enabled` and create a local,
+gitignored `secret.toml` with `callback_url` and `shared_secret` before
+connecting a real LinkUUp instance. The same secret authenticates both
+directions over TLS. LinkUUp configures `lup_dog_backlog_url` for
+`lup_connector.to_dog`.
 PyGDO connector for LinkUUp.
